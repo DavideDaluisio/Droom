@@ -15,13 +15,16 @@ const unsigned int width = 800;
 const unsigned int height = 800;
 
 std::vector<Vertex> vertices = {
-	{ {-0.5f, -0.5f, 0.0f}, {1.0f, 0.0f, 0.0f} },
-	{ {-0.5f,  0.5f, 0.0f}, {0.0f, 1.0f, 0.0f} },
-	{ { 0.5f,  0.5f, 0.0f}, {0.0f, 0.0f, 1.0f} },
-	{ { 0.5f, -0.5f, 0.0f}, {1.0f, 1.0f, 1.0f} }
+	// Posizione          // Normale            // Colore             // TexUV
+	{ {-0.5f, -0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f} },
+	{ {-0.5f,  0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}, {0.0f, 1.0f, 0.0f}, {0.0f, 1.0f} },
+	{ { 0.5f,  0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f} },
+	{ { 0.5f, -0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f, 1.0f}, {1.0f, 0.0f} }
 };
 
 std::vector<GLuint> indices = { 0, 1, 2, 0, 2, 3 };
+
+
 
 int main()
 {
@@ -56,14 +59,21 @@ int main()
 
 	Shader shader("src/Shaders/vertexShader.vs", "src/Shaders/fragmentShader.fs");
 
+
+
+
 	VertexArray VAO1;
 	VAO1.Bind();
 
 	VertexBuffer VBO1(vertices);
 	ElementBuffer EBO1(indices);
 
-	VAO1.LinkAttrib(VBO1, 0, 3, GL_FLOAT, 6 * sizeof(float), (void*)0); // position
-	VAO1.LinkAttrib(VBO1, 1, 3, GL_FLOAT, 6 * sizeof(float), (void*)(3 * sizeof(float))); // color
+	// Corretta configurazione degli attributi
+	VAO1.LinkAttrib(VBO1, 0, 3, GL_FLOAT, 11 * sizeof(float), (void*)0);                   // posizione
+	VAO1.LinkAttrib(VBO1, 1, 3, GL_FLOAT, 11 * sizeof(float), (void*)(3 * sizeof(float))); // normale
+	VAO1.LinkAttrib(VBO1, 2, 3, GL_FLOAT, 11 * sizeof(float), (void*)(6 * sizeof(float))); // colore
+	VAO1.LinkAttrib(VBO1, 3, 2, GL_FLOAT, 11 * sizeof(float), (void*)(9 * sizeof(float))); // texUV
+
 
 
 
@@ -72,9 +82,14 @@ int main()
 	VBO1.Unbind();
 	EBO1.Unbind();
 
-	//Texture popCat("src/pop_cat.png", "diffuse", 0);
-	//popCat.texUnit(shader, "tex0", 0);
 
+	// Original code from the tutorial
+	Texture popCat("src/pop_cat.png", "diffuse", 0);
+	popCat.texUnit(shader, "tex0", 0);
+
+
+
+	// Main while loop
 	while (!glfwWindowShouldClose(window))
 	{
 		// Specify the color of the background
@@ -84,9 +99,9 @@ int main()
 		// Tell OpenGL which Shader Program we want to use
 		shader.Activate();
 		// Assigns a value to the uniform; NOTE: Must always be done after activating the Shader Program
-		//shader.setFloat("scale", 0.5f);
+		shader.setFloat("scale", 0.2f);
 		// Binds texture so that is appears in rendering
-		//popCat.Bind();
+		popCat.Bind();
 		// Bind the VAO so OpenGL knows to use it
 		VAO1.Bind();
 		// Draw primitives, number of indices, datatype of indices, index of indices
@@ -97,10 +112,11 @@ int main()
 		glfwPollEvents();
 	}
 
+
+
 	// Delete window before ending the program
 	glfwDestroyWindow(window);
 	// Terminate GLFW before ending the program
 	glfwTerminate();
-
 	return 0;
 }
