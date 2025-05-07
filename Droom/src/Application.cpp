@@ -1,106 +1,76 @@
+#include <glad/glad.h>
+#include <GLFW/glfw3.h>
 #include <iostream>
 #include <vector>
-
-#include <glad/glad.h>
-#include <glm/glm.hpp>
-#include <GLFW/glfw3.h>
 
 #include "VertexBuffer.h"
 #include "ElementBuffer.h"
 #include "VertexArray.h"
 #include "Shader.h"
-#include "Texture.h"
 
-const unsigned int width = 800;
-const unsigned int height = 800;
-
-std::vector<Vertex> vertices = {
-	{ {-0.5f, -0.5f, 0.0f}, {1.0f, 0.0f, 0.0f} },
-	{ {-0.5f,  0.5f, 0.0f}, {0.0f, 1.0f, 0.0f} },
-	{ { 0.5f,  0.5f, 0.0f}, {0.0f, 0.0f, 1.0f} },
-	{ { 0.5f, -0.5f, 0.0f}, {1.0f, 1.0f, 1.0f} }
-};
-
-std::vector<GLuint> indices = { 0, 1, 2, 0, 2, 3 };
 
 int main()
 {
-	// Initialize GLFW
-	glfwInit();
+    glfwInit();
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-	// Tell GLFW what version of OpenGL we are using 
-	// In this case we are using OpenGL 3.3
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-	// Tell GLFW we are using the CORE profile
-	// So that means we only have the modern functions
-	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-
-	// Create a GLFWwindow object of 800 by 800 pixels, naming it "YoutubeOpenGL"
-	GLFWwindow* window = glfwCreateWindow(width, height, "YoutubeOpenGL", NULL, NULL);
-	// Error check if the window fails to create
-	if (window == NULL)
-	{
-		std::cout << "Failed to create GLFW window" << std::endl;
-		glfwTerminate();
-		return -1;
-	}
-	// Introduce the window into the current context
-	glfwMakeContextCurrent(window);
-
-	//Load GLAD so it configures OpenGL
-	gladLoadGL();
-	// Specify the viewport of OpenGL in the Window
-	// In this case the viewport goes from x = 0, y = 0, to x = 800, y = 800
-	glViewport(0, 0, width, height);
-
-	Shader shader("src/Shaders/vertexShader.vs", "src/Shaders/fragmentShader.fs");
-
-	VertexArray VAO1;
-	VAO1.Bind();
-
-	VertexBuffer VBO1(vertices);
-	ElementBuffer EBO1(indices);
-
-	VAO1.LinkAttrib(VBO1, 0, 3, GL_FLOAT, 6 * sizeof(float), (void*)0); // position
-	VAO1.LinkAttrib(VBO1, 1, 3, GL_FLOAT, 6 * sizeof(float), (void*)(3 * sizeof(float))); // color
+    GLFWwindow* window = glfwCreateWindow(800, 800, "Test", NULL, NULL);
+    if (window == NULL) {
+        std::cout << "Failed to create GLFW window\n";
+        glfwTerminate();
+        return -1;
+    }
+    glfwMakeContextCurrent(window);
+    gladLoadGL();
+    glViewport(0, 0, 800, 800);
 
 
+    Shader shader("src/Shaders/vertexShader.vs", "src/Shaders/fragmentShader.fs");
+    // Definizione dei vertici in formato compatibile con la classe VertexBuffer
+    std::vector<Vertex> vertices = {
+        {glm::vec3(-0.5f, -0.5f, 0.0f), glm::vec3(1.0f, 0.0f, 0.0f)}, // Vertice 0
+        {glm::vec3(-0.5f,  0.5f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f)}, // Vertice 1
+        {glm::vec3(0.5f,  0.5f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f)}, // Vertice 2
+        {glm::vec3(0.5f, -0.5f, 0.0f), glm::vec3(1.0f, 1.0f, 1.0f)}  // Vertice 3
+    };
+
+    // Indici per disegnare i triangoli
+    std::vector<GLuint> indices = {
+        0, 1, 2,
+        0, 2, 3
+    };
+
+    VertexArray VAO1;
+    VAO1.Bind();
+
+    VertexBuffer VBO1(vertices);
+    ElementBuffer EBO1(indices);
+
+    // Configurazione degli attributi nel VAO
+    VAO1.LinkAttrib(VBO1, 0, 3, GL_FLOAT, sizeof(Vertex), (void*)0); // Posizione
+    VAO1.LinkAttrib(VBO1, 1, 3, GL_FLOAT, sizeof(Vertex), (void*)offsetof(Vertex, color)); // Colore
 
 
-	VAO1.Unbind();
-	VBO1.Unbind();
-	EBO1.Unbind();
+    VAO1.Unbind();
+    VBO1.Unbind();
+    EBO1.Unbind();
 
-	//Texture popCat("src/pop_cat.png", "diffuse", 0);
-	//popCat.texUnit(shader, "tex0", 0);
 
-	while (!glfwWindowShouldClose(window))
-	{
-		// Specify the color of the background
-		glClearColor(0.07f, 0.13f, 0.17f, 1.0f);
-		// Clean the back buffer and assign the new color to it
-		glClear(GL_COLOR_BUFFER_BIT);
-		// Tell OpenGL which Shader Program we want to use
-		shader.Activate();
-		// Assigns a value to the uniform; NOTE: Must always be done after activating the Shader Program
-		//shader.setFloat("scale", 0.5f);
-		// Binds texture so that is appears in rendering
-		//popCat.Bind();
-		// Bind the VAO so OpenGL knows to use it
-		VAO1.Bind();
-		// Draw primitives, number of indices, datatype of indices, index of indices
-		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-		// Swap the back buffer with the front buffer
-		glfwSwapBuffers(window);
-		// Take care of all GLFW events
-		glfwPollEvents();
-	}
+    while (!glfwWindowShouldClose(window))
+    {
+        glClearColor(0.07f, 0.13f, 0.17f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT);
 
-	// Delete window before ending the program
-	glfwDestroyWindow(window);
-	// Terminate GLFW before ending the program
-	glfwTerminate();
+        glUseProgram(shader.GetID());
+        VAO1.Bind();
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
-	return 0;
+        glfwSwapBuffers(window);
+        glfwPollEvents();
+    }
+
+    glfwTerminate();
+    return 0;
 }
